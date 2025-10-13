@@ -751,12 +751,12 @@ body.light-mode .orb-2 {
 /* Optimized Console Content */
 .console-content {
     flex: 1;
-    padding: 24px;
+    padding: 16px;
     overflow-y: auto;
     overflow-x: hidden;
     font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Consolas', monospace;
     font-size: 13px;
-    line-height: 1.7;
+    line-height: 1.6;
     min-height: 0;
     contain: layout style;
 }
@@ -789,13 +789,10 @@ kbd {
 }
 
 .console-entry {
-    margin-bottom: 10px;
-    padding: 14px 18px;
-    border-left: 2px solid;
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.02);
-    transition: all 0.12s ease;
-    animation: elegantSlide 0.3s ease;
+    margin-bottom: 6px;
+    padding: 6px 0;
+    border: none;
+    background: transparent;
 }
 
 @keyframes elegantSlide {
@@ -809,35 +806,23 @@ kbd {
     }
 }
 
-.console-entry:hover {
-    background: rgba(255, 255, 255, 0.04);
-    transform: translateX(4px);
-}
-
 .console-entry.output {
-    border-left-color: var(--primary);
     color: var(--text-primary);
 }
 
 .console-entry.error {
-    border-left-color: var(--error);
     color: var(--error);
-    background: rgba(248, 113, 113, 0.08);
 }
 
 .console-entry.warning {
-    border-left-color: var(--warning);
     color: var(--warning);
-    background: rgba(251, 191, 36, 0.08);
 }
 
 .console-entry.info {
-    border-left-color: var(--info);
-    color: var(--info);
+    color: var(--text-secondary);
 }
 
 .console-entry.success {
-    border-left-color: var(--success);
     color: var(--success);
 }
 
