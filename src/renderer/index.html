@@ -64,6 +64,17 @@
                     <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
                 </svg>
             </button>
+            <button class="toolbar-icon-btn" id="snippets-btn" title="Code Snippets">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 7h16M4 12h10M4 17h16"/>
+                </svg>
+            </button>
+            <button class="toolbar-icon-btn" id="shortcuts-btn" title="Keyboard Shortcuts (Ctrl+K)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h8M9 16h6"/>
+                </svg>
+            </button>
         </div>
         
         <!-- Center: Drag Region (Spacer) -->
@@ -71,6 +82,28 @@
         
         <!-- Right Section: Actions & Window Controls -->
         <div class="titlebar-right">
+            <!-- Display Toggles -->
+            <button class="toolbar-icon-btn toggle-btn" id="line-numbers-toggle" title="Toggle Line Numbers">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="10" y1="6" x2="21" y2="6"/>
+                    <line x1="10" y1="12" x2="21" y2="12"/>
+                    <line x1="10" y1="18" x2="21" y2="18"/>
+                    <path d="M4 6h1v4M4 14h2M4 18h2"/>
+                </svg>
+            </button>
+            <button class="toolbar-icon-btn toggle-btn" id="word-wrap-toggle" title="Toggle Word Wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 6h16M4 12h12a4 4 0 0 1 0 8H4"/>
+                    <polyline points="16 16 20 20 16 24"/>
+                </svg>
+            </button>
+            <button class="toolbar-icon-btn toggle-btn" id="minimap-toggle" title="Toggle Minimap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <rect x="16" y="7" width="4" height="10" rx="1" fill="currentColor"/>
+                </svg>
+            </button>
+            <div class="titlebar-divider"></div>
             <!-- Action Buttons -->
             <button class="toolbar-icon-btn" id="format-btn" title="Format Code (⇧⌥F)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -371,25 +404,215 @@
         </div>
     </div>
 
-    <!-- Status Bar -->
-    <div class="status-bar">
-        <div class="status-left">
-            <span class="status-item">
-                <span class="status-dot" id="status-dot"></span>
-                <span id="status-text">Ready</span>
-            </span>
-        </div>
-        <div class="status-right">
-            <span class="status-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                </svg>
-                <span id="language-display">TypeScript</span>
-            </span>
-            <span class="status-item">Monaco Editor</span>
+    <!-- Snippets Modal -->
+    <div class="modal-overlay" id="snippets-overlay">
+        <div class="modal-container snippets-modal">
+            <div class="modal-header">
+                <h2>📝 Code Snippets</h2>
+                <button class="modal-close" id="snippets-close" title="Close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-content snippets-content">
+                <div class="snippet-category" data-lang="typescript">
+                    <h3>TypeScript Snippets</h3>
+                    <div class="snippet-list">
+                        <div class="snippet-item" data-snippet="ts-interface">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Interface</span>
+                                <span class="snippet-desc">TypeScript interface definition</span>
+                            </div>
+                        </div>
+                        <div class="snippet-item" data-snippet="ts-class">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Class</span>
+                                <span class="snippet-desc">TypeScript class with constructor</span>
+                            </div>
+                        </div>
+                        <div class="snippet-item" data-snippet="ts-async">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Async Function</span>
+                                <span class="snippet-desc">Async/await function</span>
+                            </div>
+                        </div>
+                        <div class="snippet-item" data-snippet="ts-type">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Type Alias</span>
+                                <span class="snippet-desc">Custom type definition</span>
+                            </div>
+                        </div>
+                        <div class="snippet-item" data-snippet="ts-enum">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Enum</span>
+                                <span class="snippet-desc">TypeScript enum</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="snippet-category" data-lang="javascript">
+                    <h3>JavaScript Snippets</h3>
+                    <div class="snippet-list">
+                        <div class="snippet-item" data-snippet="js-function">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Function</span>
+                                <span class="snippet-desc">Function declaration</span>
+                            </div>
+                        </div>
+                        <div class="snippet-item" data-snippet="js-arrow">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Arrow Function</span>
+                                <span class="snippet-desc">Arrow function expression</span>
+                            </div>
+                        </div>
+                        <div class="snippet-item" data-snippet="js-async">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Async Function</span>
+                                <span class="snippet-desc">Async/await function</span>
+                            </div>
+                        </div>
+                        <div class="snippet-item" data-snippet="js-class">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Class</span>
+                                <span class="snippet-desc">ES6 class</span>
+                            </div>
+                        </div>
+                        <div class="snippet-item" data-snippet="js-promise">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Promise</span>
+                                <span class="snippet-desc">Promise constructor</span>
+                            </div>
+                        </div>
+                        <div class="snippet-item" data-snippet="js-try">
+                            <div class="snippet-header">
+                                <span class="snippet-name">Try/Catch</span>
+                                <span class="snippet-desc">Error handling</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="modal-overlay" id="shortcuts-overlay">
+        <div class="modal-container shortcuts-modal">
+            <div class="modal-header">
+                <h2>⌨️ Keyboard Shortcuts</h2>
+                <button class="modal-close" id="shortcuts-close" title="Close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-content shortcuts-content">
+                <div class="shortcuts-section">
+                    <h3>General</h3>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Run Code</span>
+                            <kbd>⌘/Ctrl + Enter</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Format Code</span>
+                            <kbd>⇧⌥ + F</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Toggle Theme</span>
+                            <kbd>Click Theme Icon</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Keyboard Shortcuts</span>
+                            <kbd>Ctrl/⌘ + K</kbd>
+                        </div>
+                    </div>
+                </div>
+                <div class="shortcuts-section">
+                    <h3>Editor</h3>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Select All</span>
+                            <kbd>⌘/Ctrl + A</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Cut</span>
+                            <kbd>⌘/Ctrl + X</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Copy</span>
+                            <kbd>⌘/Ctrl + C</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Paste</span>
+                            <kbd>⌘/Ctrl + V</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Undo</span>
+                            <kbd>⌘/Ctrl + Z</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Redo</span>
+                            <kbd>⌘/Ctrl + ⇧ + Z</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Find</span>
+                            <kbd>⌘/Ctrl + F</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Replace</span>
+                            <kbd>⌘/Ctrl + H</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Delete Line</span>
+                            <kbd>⌘/Ctrl + D</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Move Line Up</span>
+                            <kbd>⌥ + ↑</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Move Line Down</span>
+                            <kbd>⌥ + ↓</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Duplicate Line</span>
+                            <kbd>⇧⌥ + ↓</kbd>
+                        </div>
+                    </div>
+                </div>
+                <div class="shortcuts-section">
+                    <h3>Navigation</h3>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Go to Line</span>
+                            <kbd>⌘/Ctrl + G</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Go to Start of Line</span>
+                            <kbd>Home / ⌘ + ←</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Go to End of Line</span>
+                            <kbd>End / ⌘ + →</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Go to Start of File</span>
+                            <kbd>⌘/Ctrl + Home</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-action">Go to End of File</span>
+                            <kbd>⌘/Ctrl + End</kbd>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Custom Context Menu -->
     <div class="custom-context-menu" id="custom-context-menu">
