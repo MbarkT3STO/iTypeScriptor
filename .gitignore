@@ -19,8 +19,8 @@ build/
 out/
 *.js.map
 
-# TypeScript compiled files (keep source .ts, ignore compiled .js in src/)
-src/**/*.js
+# TypeScript compiled files (keep source .ts)
+
 !src/**/*.config.js
 
 # ============================================
