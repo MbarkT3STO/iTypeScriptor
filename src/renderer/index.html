@@ -75,14 +75,6 @@
                     <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h8M9 16h6"/>
                 </svg>
             </button>
-            <button class="toolbar-icon-btn ai-btn" id="ai-btn" title="AI Code Assistant (Ctrl+I)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                    <path d="M2 17l10 5 10-5"/>
-                    <path d="M2 12l10 5 10-5"/>
-                </svg>
-                <span class="ai-badge">AI</span>
-            </button>
         </div>
         
         <!-- Center: Drag Region (Spacer) -->
@@ -410,29 +402,6 @@
                         </select>
                     </div>
                 </div>
-                <div class="settings-section">
-                    <h3>AI Assistant</h3>
-                    <div class="setting-item">
-                        <label for="setting-ai-provider">AI Provider</label>
-                        <select id="setting-ai-provider">
-                            <option value="demo">Demo Mode (Mock Responses)</option>
-                            <option value="openai">OpenAI GPT</option>
-                            <option value="anthropic">Anthropic Claude</option>
-                            <option value="custom">Custom API</option>
-                        </select>
-                    </div>
-                    <div class="setting-item">
-                        <label for="setting-ai-key">API Key (Optional)</label>
-                        <input type="password" id="setting-ai-key" placeholder="sk-...">
-                        <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">Your API key is stored locally and never sent anywhere except your chosen AI provider</small>
-                    </div>
-                    <div class="setting-item setting-checkbox">
-                        <label>
-                            <input type="checkbox" id="setting-ai-enabled" checked>
-                            <span>Enable AI Features</span>
-                        </label>
-                    </div>
-                </div>
             </div>
             <div class="settings-footer">
                 <button class="settings-cancel" id="settings-cancel">Cancel</button>
@@ -529,137 +498,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI Code Assistant Modal -->
-    <div class="modal-overlay" id="ai-overlay">
-        <div class="modal-container ai-modal">
-            <div class="modal-header">
-                <h2>🤖 AI Code Assistant</h2>
-                <button class="modal-close" id="ai-close" title="Close">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-content ai-content">
-                <!-- AI Actions -->
-                <div class="ai-actions">
-                    <button class="ai-action-btn" data-action="explain">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                            <line x1="12" y1="17" x2="12.01" y2="17"/>
-                        </svg>
-                        <div class="ai-action-text">
-                            <span class="ai-action-title">Explain Code</span>
-                            <span class="ai-action-desc">Get detailed explanation of selected code</span>
-                        </div>
-                    </button>
-                    
-                    <button class="ai-action-btn" data-action="generate">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 5v14M5 12h14"/>
-                        </svg>
-                        <div class="ai-action-text">
-                            <span class="ai-action-title">Generate Code</span>
-                            <span class="ai-action-desc">Create code from your comment or description</span>
-                        </div>
-                    </button>
-                    
-                    <button class="ai-action-btn" data-action="improve">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
-                        <div class="ai-action-text">
-                            <span class="ai-action-title">Improve Code</span>
-                            <span class="ai-action-desc">Get suggestions to optimize your code</span>
-                        </div>
-                    </button>
-                    
-                    <button class="ai-action-btn" data-action="fix">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                        </svg>
-                        <div class="ai-action-text">
-                            <span class="ai-action-title">Fix Bugs</span>
-                            <span class="ai-action-desc">Identify and fix potential issues</span>
-                        </div>
-                    </button>
-                    
-                    <button class="ai-action-btn" data-action="document">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                            <line x1="16" y1="13" x2="8" y2="13"/>
-                            <line x1="16" y1="17" x2="8" y2="17"/>
-                            <line x1="10" y1="9" x2="8" y2="9"/>
-                        </svg>
-                        <div class="ai-action-text">
-                            <span class="ai-action-title">Add Documentation</span>
-                            <span class="ai-action-desc">Generate JSDoc comments automatically</span>
-                        </div>
-                    </button>
-                    
-                    <button class="ai-action-btn" data-action="chat">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                        </svg>
-                        <div class="ai-action-text">
-                            <span class="ai-action-title">Ask AI</span>
-                            <span class="ai-action-desc">Chat with AI about your code</span>
-                        </div>
-                    </button>
-                </div>
-                
-                <!-- AI Response Area -->
-                <div class="ai-response" id="ai-response" style="display: none;">
-                    <div class="ai-response-header">
-                        <span id="ai-response-title">AI Response</span>
-                        <button class="ai-copy-btn" id="ai-copy" title="Copy to clipboard">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="ai-response-content" id="ai-response-content">
-                        <div class="ai-loading">
-                            <div class="ai-loading-spinner"></div>
-                            <span>AI is thinking...</span>
-                        </div>
-                    </div>
-                    <div class="ai-response-actions">
-                        <button class="ai-apply-btn" id="ai-apply">Apply to Editor</button>
-                        <button class="ai-cancel-btn" id="ai-cancel">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI Input Modal (for chat) -->
-    <div class="modal-overlay" id="ai-input-overlay">
-        <div class="modal-container ai-input-modal">
-            <div class="modal-header">
-                <h2>💬 Ask AI</h2>
-                <button class="modal-close" id="ai-input-close" title="Close">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-content">
-                <label for="ai-question-input" style="display: block; margin-bottom: 12px; color: var(--text-primary); font-weight: 500;">What would you like to know about your code?</label>
-                <textarea id="ai-question-input" placeholder="e.g., How can I optimize this function? What does this code do?" style="width: 100%; min-height: 100px; padding: 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 13px; resize: vertical;" autofocus></textarea>
-                <div style="display: flex; gap: 12px; margin-top: 16px; justify-content: flex-end;">
-                    <button class="ai-cancel-btn" id="ai-input-cancel">Cancel</button>
-                    <button class="ai-apply-btn" id="ai-input-submit">Ask AI</button>
                 </div>
             </div>
         </div>
