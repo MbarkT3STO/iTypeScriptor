@@ -69,6 +69,13 @@
                     <path d="M4 7h16M4 12h10M4 17h16"/>
                 </svg>
             </button>
+            <button class="toolbar-icon-btn" id="packages-btn" title="NPM Packages">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                    <line x1="12" y1="22.08" x2="12" y2="12"/>
+                </svg>
+            </button>
             <button class="toolbar-icon-btn" id="shortcuts-btn" title="Keyboard Shortcuts (Ctrl+K)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -619,6 +626,59 @@
         </div>
     </div>
 
+    <!-- NPM Packages Modal -->
+    <div class="modal-overlay" id="packages-overlay">
+        <div class="modal-container packages-modal">
+            <div class="modal-header">
+                <h2>📦 NPM Package Manager</h2>
+                <button class="modal-close" id="packages-close" title="Close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-content packages-content">
+                <!-- Search Section -->
+                <div class="package-search-section">
+                    <div class="package-search-bar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <input type="text" id="package-search-input" placeholder="Search NPM packages..." />
+                        <button class="package-search-btn" id="package-search-btn">Search</button>
+                    </div>
+                    <div class="package-search-results" id="package-search-results"></div>
+                </div>
+
+                <!-- Installed Packages Section -->
+                <div class="packages-section">
+                    <div class="section-header">
+                        <h3>Installed Packages</h3>
+                        <button class="icon-btn" id="refresh-packages-btn" title="Refresh">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <polyline points="1 20 1 14 7 14"/>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="installed-packages-list" id="installed-packages-list">
+                        <div class="packages-empty">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                <line x1="12" y1="22.08" x2="12" y2="12"/>
+                            </svg>
+                            <p>No packages installed yet</p>
+                            <p class="hint">Search and install packages above</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Custom Context Menu -->
     <div class="custom-context-menu" id="custom-context-menu">

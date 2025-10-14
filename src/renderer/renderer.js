@@ -1261,6 +1261,265 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ========================================
+// NPM Package Manager
+// ========================================
+const packagesBtn = document.getElementById('packages-btn');
+const packagesOverlay = document.getElementById('packages-overlay');
+const packagesClose = document.getElementById('packages-close');
+const packageSearchInput = document.getElementById('package-search-input');
+const packageSearchBtn = document.getElementById('package-search-btn');
+const packageSearchResults = document.getElementById('package-search-results');
+const installedPackagesList = document.getElementById('installed-packages-list');
+const refreshPackagesBtn = document.getElementById('refresh-packages-btn');
+
+let installedPackages = [];
+
+// Open packages modal
+function openPackages() {
+    packagesOverlay.classList.add('active');
+    loadInstalledPackages();
+}
+
+// Close packages modal
+function closePackages() {
+    packagesOverlay.classList.remove('active');
+    packageSearchInput.value = '';
+    packageSearchResults.innerHTML = '';
+}
+
+// Search for NPM packages
+async function searchPackages() {
+    const query = packageSearchInput.value.trim();
+    if (!query) return;
+
+    packageSearchResults.innerHTML = `
+        <div class="package-loading">
+            <div class="package-loading-spinner"></div>
+            <span>Searching packages...</span>
+        </div>
+    `;
+
+    try {
+        const result = await window.electronAPI.npmSearch(query);
+        
+        if (result.success && result.packages) {
+            if (result.packages.length === 0) {
+                packageSearchResults.innerHTML = `
+                    <div class="packages-empty">
+                        <p>No packages found for "${query}"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            packageSearchResults.innerHTML = result.packages.map(pkg => {
+                const isInstalled = installedPackages.some(p => p.name === pkg.name);
+                return `
+                    <div class="search-result-item">
+                        <div class="search-result-info">
+                            <div>
+                                <span class="search-result-name">${pkg.name}</span>
+                                <span class="search-result-version">v${pkg.version}</span>
+                            </div>
+                            <div class="search-result-description">${pkg.description}</div>
+                            <div class="search-result-stats">
+                                <span class="search-stat">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="8.5" cy="7" r="4"/>
+                                    </svg>
+                                    ${pkg.author}
+                                </span>
+                            </div>
+                        </div>
+                        <button class="install-package-btn ${isInstalled ? 'installed' : ''}" 
+                                data-package="${pkg.name}" 
+                                ${isInstalled ? 'disabled' : ''}>
+                            ${isInstalled ? '✓ Installed' : 'Install'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            // Add event listeners to install buttons
+            document.querySelectorAll('.install-package-btn:not(.installed)').forEach(btn => {
+                btn.addEventListener('click', () => installPackage(btn.dataset.package, btn));
+            });
+        } else {
+            packageSearchResults.innerHTML = `
+                <div class="packages-empty">
+                    <p>Error: ${result.error || 'Failed to search packages'}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        packageSearchResults.innerHTML = `
+            <div class="packages-empty">
+                <p>Error: ${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+// Install a package
+async function installPackage(packageName, buttonElement) {
+    buttonElement.disabled = true;
+    buttonElement.classList.add('installing');
+    buttonElement.textContent = 'Installing...';
+
+    try {
+        const result = await window.electronAPI.npmInstall(packageName);
+        
+        if (result.success) {
+            buttonElement.textContent = '✓ Installed';
+            buttonElement.classList.remove('installing');
+            buttonElement.classList.add('installed');
+            
+            // Reload installed packages
+            await loadInstalledPackages();
+            
+            // Show success in console
+            addConsoleEntry(`✓ Successfully installed ${packageName}`, 'success');
+        } else {
+            buttonElement.textContent = 'Install Failed';
+            buttonElement.disabled = false;
+            buttonElement.classList.remove('installing');
+            
+            addConsoleEntry(`✗ Failed to install ${packageName}: ${result.error}`, 'error');
+            
+            setTimeout(() => {
+                buttonElement.textContent = 'Install';
+            }, 2000);
+        }
+    } catch (error) {
+        buttonElement.textContent = 'Install Failed';
+        buttonElement.disabled = false;
+        buttonElement.classList.remove('installing');
+        
+        addConsoleEntry(`✗ Error installing ${packageName}: ${error.message}`, 'error');
+        
+        setTimeout(() => {
+            buttonElement.textContent = 'Install';
+        }, 2000);
+    }
+}
+
+// Uninstall a package
+async function uninstallPackage(packageName, buttonElement) {
+    buttonElement.disabled = true;
+    buttonElement.textContent = 'Uninstalling...';
+
+    try {
+        const result = await window.electronAPI.npmUninstall(packageName);
+        
+        if (result.success) {
+            // Reload installed packages
+            await loadInstalledPackages();
+            
+            // Show success in console
+            addConsoleEntry(`✓ Successfully uninstalled ${packageName}`, 'success');
+        } else {
+            buttonElement.disabled = false;
+            buttonElement.textContent = 'Uninstall';
+            
+            addConsoleEntry(`✗ Failed to uninstall ${packageName}: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        buttonElement.disabled = false;
+        buttonElement.textContent = 'Uninstall';
+        
+        addConsoleEntry(`✗ Error uninstalling ${packageName}: ${error.message}`, 'error');
+    }
+}
+
+// Load installed packages
+async function loadInstalledPackages() {
+    try {
+        const result = await window.electronAPI.npmList();
+        
+        if (result.success) {
+            installedPackages = result.packages || [];
+            
+            if (installedPackages.length === 0) {
+                installedPackagesList.innerHTML = `
+                    <div class="packages-empty">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                            <line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                        <p>No packages installed yet</p>
+                        <p class="hint">Search and install packages above</p>
+                    </div>
+                `;
+            } else {
+                installedPackagesList.innerHTML = installedPackages.map(pkg => `
+                    <div class="package-item">
+                        <div class="package-info">
+                            <span class="package-name">${pkg.name}</span>
+                            <span class="package-version">${pkg.version}</span>
+                        </div>
+                        <div class="package-actions">
+                            <button class="uninstall-package-btn" data-package="${pkg.name}">
+                                Uninstall
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add event listeners to uninstall buttons
+                document.querySelectorAll('.uninstall-package-btn').forEach(btn => {
+                    btn.addEventListener('click', () => uninstallPackage(btn.dataset.package, btn));
+                });
+            }
+        } else {
+            installedPackagesList.innerHTML = `
+                <div class="packages-empty">
+                    <p>Error loading packages: ${result.error}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        installedPackagesList.innerHTML = `
+            <div class="packages-empty">
+                <p>Error: ${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+// Event listeners for packages modal
+if (packagesBtn) {
+    packagesBtn.addEventListener('click', openPackages);
+}
+
+if (packagesClose) {
+    packagesClose.addEventListener('click', closePackages);
+}
+
+if (packagesOverlay) {
+    packagesOverlay.addEventListener('click', (e) => {
+        if (e.target === packagesOverlay) closePackages();
+    });
+}
+
+if (packageSearchBtn) {
+    packageSearchBtn.addEventListener('click', searchPackages);
+}
+
+if (packageSearchInput) {
+    packageSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            searchPackages();
+        }
+    });
+}
+
+if (refreshPackagesBtn) {
+    refreshPackagesBtn.addEventListener('click', loadInstalledPackages);
+}
+
+// ========================================
 // Quick Toggles (Line Numbers, Word Wrap, Minimap)
 // ========================================
 const lineNumbersToggle = document.getElementById('line-numbers-toggle');

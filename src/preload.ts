@@ -13,7 +13,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('maximize-window'),
   
   closeWindow: () => 
-    ipcRenderer.invoke('close-window')
+    ipcRenderer.invoke('close-window'),
+  
+  // NPM Package Manager
+  npmSearch: (query: string) => 
+    ipcRenderer.invoke('npm-search', query),
+  
+  npmInstall: (packageName: string) => 
+    ipcRenderer.invoke('npm-install', packageName),
+  
+  npmUninstall: (packageName: string) => 
+    ipcRenderer.invoke('npm-uninstall', packageName),
+  
+  npmList: () => 
+    ipcRenderer.invoke('npm-list')
 });
 
 // Type definitions for TypeScript
@@ -33,6 +46,30 @@ declare global {
       minimizeWindow: () => Promise<void>;
       maximizeWindow: () => Promise<void>;
       closeWindow: () => Promise<void>;
+      npmSearch: (query: string) => Promise<{
+        success: boolean;
+        packages?: any[];
+        error?: string;
+      }>;
+      npmInstall: (packageName: string) => Promise<{
+        success: boolean;
+        message?: string;
+        output?: string;
+        error?: string;
+        stderr?: string;
+      }>;
+      npmUninstall: (packageName: string) => Promise<{
+        success: boolean;
+        message?: string;
+        output?: string;
+        error?: string;
+        stderr?: string;
+      }>;
+      npmList: () => Promise<{
+        success: boolean;
+        packages?: any[];
+        error?: string;
+      }>;
     };
   }
 }

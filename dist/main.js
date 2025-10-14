@@ -35,7 +35,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const path = __importStar(require("path"));
+const child_process_1 = require("child_process");
+const util_1 = require("util");
+const fs = __importStar(require("fs"));
 const codeExecutor_1 = require("./codeExecutor");
+const execAsync = (0, util_1.promisify)(child_process_1.exec);
 let mainWindow = null;
 function createWindow() {
     mainWindow = new electron_1.BrowserWindow({
@@ -111,5 +115,118 @@ electron_1.ipcMain.handle('maximize-window', () => {
 electron_1.ipcMain.handle('close-window', () => {
     if (mainWindow) {
         mainWindow.close();
+    }
+});
+// NPM Package Manager Handlers
+electron_1.ipcMain.handle('npm-search', async (_event, query) => {
+    try {
+        // Use NPM registry API for searching
+        const https = require('https');
+        const url = `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(query)}&size=10`;
+        return new Promise((resolve, reject) => {
+            https.get(url, (res) => {
+                let data = '';
+                res.on('data', (chunk) => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const result = JSON.parse(data);
+                        const packages = result.objects.map((obj) => ({
+                            name: obj.package.name,
+                            version: obj.package.version,
+                            description: obj.package.description || 'No description',
+                            downloads: obj.package.links?.npm || '',
+                            author: obj.package.author?.name || obj.package.publisher?.username || 'Unknown'
+                        }));
+                        resolve({ success: true, packages });
+                    }
+                    catch (error) {
+                        reject({ success: false, error: error.message });
+                    }
+                });
+            }).on('error', (error) => {
+                reject({ success: false, error: error.message });
+            });
+        });
+    }
+    catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+electron_1.ipcMain.handle('npm-install', async (_event, packageName) => {
+    try {
+        const workDir = electron_1.app.getPath('userData');
+        const packageJsonPath = path.join(workDir, 'package.json');
+        // Create package.json if it doesn't exist
+        if (!fs.existsSync(packageJsonPath)) {
+            const initialPackageJson = {
+                name: "itypescriptor-workspace",
+                version: "1.0.0",
+                description: "iTypeScriptor workspace for npm packages",
+                dependencies: {}
+            };
+            fs.writeFileSync(packageJsonPath, JSON.stringify(initialPackageJson, null, 2));
+        }
+        // Install the package
+        const { stdout, stderr } = await execAsync(`npm install ${packageName}`, {
+            cwd: workDir,
+            timeout: 60000 // 60 second timeout
+        });
+        return {
+            success: true,
+            message: `Successfully installed ${packageName}`,
+            output: stdout
+        };
+    }
+    catch (error) {
+        return {
+            success: false,
+            error: error.message || 'Failed to install package',
+            stderr: error.stderr
+        };
+    }
+});
+electron_1.ipcMain.handle('npm-uninstall', async (_event, packageName) => {
+    try {
+        const workDir = electron_1.app.getPath('userData');
+        const { stdout, stderr } = await execAsync(`npm uninstall ${packageName}`, {
+            cwd: workDir,
+            timeout: 30000
+        });
+        return {
+            success: true,
+            message: `Successfully uninstalled ${packageName}`,
+            output: stdout
+        };
+    }
+    catch (error) {
+        return {
+            success: false,
+            error: error.message || 'Failed to uninstall package',
+            stderr: error.stderr
+        };
+    }
+});
+electron_1.ipcMain.handle('npm-list', async () => {
+    try {
+        const workDir = electron_1.app.getPath('userData');
+        const packageJsonPath = path.join(workDir, 'package.json');
+        // Check if package.json exists
+        if (!fs.existsSync(packageJsonPath)) {
+            return { success: true, packages: [] };
+        }
+        const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+        const packageJson = JSON.parse(packageJsonContent);
+        const dependencies = packageJson.dependencies || {};
+        const packages = Object.keys(dependencies).map(name => ({
+            name,
+            version: dependencies[name]
+        }));
+        return { success: true, packages };
+    }
+    catch (error) {
+        return {
+            success: false,
+            error: error.message || 'Failed to list packages'
+        };
     }
 });
