@@ -371,6 +371,9 @@ function initializeEditor() {
                 setTimeout(() => loadingScreen.remove(), 400);
             }
         }, 300);
+        
+        // Initialize IntelliSense for installed packages
+        initializePackageIntelliSense();
     });
 }
 
@@ -1378,6 +1381,9 @@ async function installPackage(packageName, buttonElement) {
             // Reload installed packages
             await loadInstalledPackages();
             
+            // Refresh IntelliSense cache
+            await refreshPackageCache();
+            
             // Show success in console
             addConsoleEntry(`✓ Successfully installed ${packageName}`, 'success');
         } else {
@@ -1415,6 +1421,9 @@ async function uninstallPackage(packageName, buttonElement) {
         if (result.success) {
             // Reload installed packages
             await loadInstalledPackages();
+            
+            // Refresh IntelliSense cache
+            await refreshPackageCache();
             
             // Show success in console
             addConsoleEntry(`✓ Successfully uninstalled ${packageName}`, 'success');
@@ -1681,6 +1690,232 @@ function loadAutoSavedCode() {
         }
     } catch (error) {
         console.error('Failed to load auto-saved code:', error);
+    }
+}
+
+// ========================================
+// Enhanced IntelliSense for Installed Packages
+// ========================================
+
+let installedPackagesCache = [];
+let packageExportsCache = new Map();
+
+// Initialize package IntelliSense
+async function initializePackageIntelliSense() {
+    try {
+        console.log('🔍 Initializing package IntelliSense...');
+        
+        // Load all installed packages metadata
+        const result = await window.electronAPI.getAllPackagesMetadata();
+        
+        if (result.success && result.packages) {
+            installedPackagesCache = result.packages;
+            console.log('✅ Loaded packages for IntelliSense:', installedPackagesCache.length);
+            
+            // Set up Monaco editor IntelliSense
+            setupMonacoIntelliSense();
+        } else {
+            console.log('⚠️ No packages found for IntelliSense');
+        }
+    } catch (error) {
+        console.error('❌ Failed to initialize package IntelliSense:', error);
+    }
+}
+
+// Set up Monaco editor IntelliSense
+function setupMonacoIntelliSense() {
+    if (!editor) return;
+    
+    // Register completion provider for import statements
+    monaco.languages.registerCompletionItemProvider('typescript', {
+        provideCompletionItems: async (model, position) => {
+            const textUntilPosition = model.getValueInRange({
+                startLineNumber: 1,
+                startColumn: 1,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column
+            });
+            
+            const suggestions = [];
+            
+            // Check if we're in an import statement
+            const importMatch = textUntilPosition.match(/import\s*\{?\s*([^}]*?)\s*\}?\s*from\s*['"`]([^'"`]*?)$/);
+            
+            if (importMatch) {
+                const packageName = importMatch[2];
+                const currentImport = importMatch[1];
+                
+                // If we're importing from an installed package
+                if (installedPackagesCache.some(pkg => pkg.name === packageName)) {
+                    try {
+                        // Get package exports
+                        const exportsResult = await window.electronAPI.getPackageExports(packageName);
+                        
+                        if (exportsResult.success && exportsResult.exports) {
+                            const { mainExports, hasTypes } = exportsResult.exports;
+                            
+                            // Add export suggestions
+                            mainExports.forEach(exportName => {
+                                if (exportName.toLowerCase().includes(currentImport.toLowerCase())) {
+                                    suggestions.push({
+                                        label: exportName,
+                                        kind: monaco.languages.CompletionItemKind.Function,
+                                        insertText: exportName,
+                                        detail: `From ${packageName}`,
+                                        documentation: hasTypes ? 'TypeScript support available' : 'JavaScript only',
+                                        sortText: '1' + exportName
+                                    });
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.log('Could not get exports for', packageName, error);
+                    }
+                }
+            }
+            
+            // Check if we're typing a package name in import
+            const packageImportMatch = textUntilPosition.match(/import\s*.*?\s*from\s*['"`]([^'"`]*?)$/);
+            if (packageImportMatch) {
+                const partialPackageName = packageImportMatch[1];
+                
+                // Suggest installed packages
+                installedPackagesCache.forEach(pkg => {
+                    if (pkg.name.toLowerCase().includes(partialPackageName.toLowerCase())) {
+                        suggestions.push({
+                            label: pkg.name,
+                            kind: monaco.languages.CompletionItemKind.Module,
+                            insertText: pkg.name,
+                            detail: pkg.description || 'No description',
+                            documentation: `Version: ${pkg.version}${pkg.hasTypes ? ' | TypeScript support' : ''}`,
+                            sortText: '0' + pkg.name
+                        });
+                    }
+                });
+            }
+            
+            return { suggestions };
+        }
+    });
+    
+    // Register hover provider for package information
+    monaco.languages.registerHoverProvider('typescript', {
+        provideHover: async (model, position) => {
+            const word = model.getWordAtPosition(position);
+            if (!word) return null;
+            
+            const wordText = word.word;
+            
+            // Check if it's an installed package
+            const packageInfo = installedPackagesCache.find(pkg => pkg.name === wordText);
+            if (packageInfo) {
+                return {
+                    range: new monaco.Range(
+                        position.lineNumber,
+                        word.startColumn,
+                        position.lineNumber,
+                        word.endColumn
+                    ),
+                    contents: [
+                        { value: `**${packageInfo.name}** v${packageInfo.version}` },
+                        { value: packageInfo.description || 'No description available' },
+                        { value: `Author: ${packageInfo.author || 'Unknown'}` },
+                        { value: `License: ${packageInfo.license || 'Unknown'}` },
+                        { value: packageInfo.hasTypes ? '✅ TypeScript support' : '⚠️ JavaScript only' }
+                    ]
+                };
+            }
+            
+            return null;
+        }
+    });
+    
+    // Register completion provider for JavaScript as well
+    monaco.languages.registerCompletionItemProvider('javascript', {
+        provideCompletionItems: async (model, position) => {
+            const textUntilPosition = model.getValueInRange({
+                startLineNumber: 1,
+                startColumn: 1,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column
+            });
+            
+            const suggestions = [];
+            
+            // Check if we're in an import statement
+            const importMatch = textUntilPosition.match(/import\s*\{?\s*([^}]*?)\s*\}?\s*from\s*['"`]([^'"`]*?)$/);
+            
+            if (importMatch) {
+                const packageName = importMatch[2];
+                const currentImport = importMatch[1];
+                
+                // If we're importing from an installed package
+                if (installedPackagesCache.some(pkg => pkg.name === packageName)) {
+                    try {
+                        // Get package exports
+                        const exportsResult = await window.electronAPI.getPackageExports(packageName);
+                        
+                        if (exportsResult.success && exportsResult.exports) {
+                            const { mainExports } = exportsResult.exports;
+                            
+                            // Add export suggestions
+                            mainExports.forEach(exportName => {
+                                if (exportName.toLowerCase().includes(currentImport.toLowerCase())) {
+                                    suggestions.push({
+                                        label: exportName,
+                                        kind: monaco.languages.CompletionItemKind.Function,
+                                        insertText: exportName,
+                                        detail: `From ${packageName}`,
+                                        documentation: 'JavaScript export',
+                                        sortText: '1' + exportName
+                                    });
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.log('Could not get exports for', packageName, error);
+                    }
+                }
+            }
+            
+            // Check if we're typing a package name in import
+            const packageImportMatch = textUntilPosition.match(/import\s*.*?\s*from\s*['"`]([^'"`]*?)$/);
+            if (packageImportMatch) {
+                const partialPackageName = packageImportMatch[1];
+                
+                // Suggest installed packages
+                installedPackagesCache.forEach(pkg => {
+                    if (pkg.name.toLowerCase().includes(partialPackageName.toLowerCase())) {
+                        suggestions.push({
+                            label: pkg.name,
+                            kind: monaco.languages.CompletionItemKind.Module,
+                            insertText: pkg.name,
+                            detail: pkg.description || 'No description',
+                            documentation: `Version: ${pkg.version}`,
+                            sortText: '0' + pkg.name
+                        });
+                    }
+                });
+            }
+            
+            return { suggestions };
+        }
+    });
+    
+    console.log('✅ Monaco IntelliSense configured for installed packages');
+}
+
+// Refresh package cache when packages are installed/uninstalled
+async function refreshPackageCache() {
+    try {
+        const result = await window.electronAPI.getAllPackagesMetadata();
+        if (result.success && result.packages) {
+            installedPackagesCache = result.packages;
+            packageExportsCache.clear(); // Clear exports cache
+            console.log('✅ Package cache refreshed:', installedPackagesCache.length, 'packages');
+        }
+    } catch (error) {
+        console.error('❌ Failed to refresh package cache:', error);
     }
 }
 

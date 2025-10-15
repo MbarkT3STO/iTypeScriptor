@@ -16,16 +16,14 @@ function createWindow(): void {
     minWidth: 1000,
     minHeight: 600,
     titleBarStyle: 'hiddenInset',
-    transparent: true,
-    vibrancy: 'under-window',
-    visualEffectState: 'active',
+    transparent: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false
     },
-    backgroundColor: '#00000000',
+    backgroundColor: '#1a1a1a',
     frame: false,
     hasShadow: true
   });
@@ -212,6 +210,203 @@ ipcMain.handle('npm-list', async () => {
     return { 
       success: false, 
       error: error.message || 'Failed to list packages'
+    };
+  }
+});
+
+// Get package metadata and exports for IntelliSense
+ipcMain.handle('get-package-metadata', async (_event, packageName: string) => {
+  try {
+    const workDir = app.getPath('userData');
+    const nodeModulesPath = path.join(workDir, 'node_modules', packageName);
+    const packageJsonPath = path.join(nodeModulesPath, 'package.json');
+    
+    if (!fs.existsSync(packageJsonPath)) {
+      return { success: false, error: 'Package not found' };
+    }
+    
+    const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+    const packageJson = JSON.parse(packageJsonContent);
+    
+    // Extract main exports and types
+    const metadata = {
+      name: packageJson.name,
+      version: packageJson.version,
+      description: packageJson.description || '',
+      main: packageJson.main || 'index.js',
+      types: packageJson.types || packageJson.typings || null,
+      exports: packageJson.exports || null,
+      dependencies: packageJson.dependencies || {},
+      peerDependencies: packageJson.peerDependencies || {},
+      keywords: packageJson.keywords || [],
+      author: packageJson.author || '',
+      license: packageJson.license || '',
+      repository: packageJson.repository || null,
+      homepage: packageJson.homepage || null
+    };
+    
+    return { success: true, metadata };
+  } catch (error: any) {
+    return { 
+      success: false, 
+      error: error.message || 'Failed to get package metadata'
+    };
+  }
+});
+
+// Get package exports for IntelliSense
+ipcMain.handle('get-package-exports', async (_event, packageName: string) => {
+  try {
+    const workDir = app.getPath('userData');
+    const nodeModulesPath = path.join(workDir, 'node_modules', packageName);
+    const packageJsonPath = path.join(nodeModulesPath, 'package.json');
+    
+    if (!fs.existsSync(packageJsonPath)) {
+      return { success: false, error: 'Package not found' };
+    }
+    
+    const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+    const packageJson = JSON.parse(packageJsonContent);
+    
+    const exports: any = {};
+    
+    // Parse package.json exports field
+    if (packageJson.exports) {
+      if (typeof packageJson.exports === 'string') {
+        exports['.'] = packageJson.exports;
+      } else if (typeof packageJson.exports === 'object') {
+        Object.keys(packageJson.exports).forEach(key => {
+          const exportValue = packageJson.exports[key];
+          if (typeof exportValue === 'string') {
+            exports[key] = exportValue;
+          } else if (typeof exportValue === 'object' && exportValue.import) {
+            exports[key] = exportValue.import;
+          }
+        });
+      }
+    }
+    
+    // If no exports field, use main field
+    if (Object.keys(exports).length === 0 && packageJson.main) {
+      exports['.'] = packageJson.main;
+    }
+    
+    // Try to read the main file to extract available exports
+    let mainExports: string[] = [];
+    try {
+      const mainFile = exports['.'] || packageJson.main || 'index.js';
+      const mainFilePath = path.join(nodeModulesPath, mainFile);
+      
+      if (fs.existsSync(mainFilePath)) {
+        const mainFileContent = fs.readFileSync(mainFilePath, 'utf8');
+        
+        // Extract exports using regex patterns
+        const exportPatterns = [
+          /export\s+(?:const|let|var|function|class|interface|type|enum)\s+(\w+)/g,
+          /export\s*\{\s*([^}]+)\s*\}/g,
+          /export\s+default\s+(\w+)/g,
+          /module\.exports\s*\.\s*(\w+)/g,
+          /exports\.(\w+)/g
+        ];
+        
+        const foundExports = new Set<string>();
+        
+        exportPatterns.forEach(pattern => {
+          let match;
+          while ((match = pattern.exec(mainFileContent)) !== null) {
+            if (match[1]) {
+              // Handle multiple exports in one line
+              const exportNames = match[1].split(',').map(name => name.trim().split(' as ')[0].trim());
+              exportNames.forEach(name => {
+                if (name && name !== 'default') {
+                  foundExports.add(name);
+                }
+              });
+            }
+          }
+        });
+        
+        mainExports = Array.from(foundExports);
+      }
+    } catch (error) {
+      console.log('Could not parse main file for exports:', error);
+    }
+    
+    return { 
+      success: true, 
+      exports: {
+        packageExports: exports,
+        mainExports: mainExports,
+        hasTypes: !!(packageJson.types || packageJson.typings)
+      }
+    };
+  } catch (error: any) {
+    return { 
+      success: false, 
+      error: error.message || 'Failed to get package exports'
+    };
+  }
+});
+
+// Get all installed packages with their metadata for IntelliSense
+ipcMain.handle('get-all-packages-metadata', async () => {
+  try {
+    const workDir = app.getPath('userData');
+    const packageJsonPath = path.join(workDir, 'package.json');
+    
+    if (!fs.existsSync(packageJsonPath)) {
+      return { success: true, packages: [] };
+    }
+    
+    const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+    const packageJson = JSON.parse(packageJsonContent);
+    const dependencies = packageJson.dependencies || {};
+    
+    const packagesWithMetadata = [];
+    
+    for (const [name, version] of Object.entries(dependencies)) {
+      try {
+        const nodeModulesPath = path.join(workDir, 'node_modules', name);
+        const packageJsonPath = path.join(nodeModulesPath, 'package.json');
+        
+        if (fs.existsSync(packageJsonPath)) {
+          const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+          const packageJson = JSON.parse(packageJsonContent);
+          
+          packagesWithMetadata.push({
+            name,
+            version,
+            description: packageJson.description || '',
+            main: packageJson.main || 'index.js',
+            types: packageJson.types || packageJson.typings || null,
+            hasTypes: !!(packageJson.types || packageJson.typings),
+            keywords: packageJson.keywords || [],
+            author: packageJson.author || '',
+            license: packageJson.license || ''
+          });
+        }
+      } catch (error) {
+        console.log(`Could not get metadata for ${name}:`, error);
+        // Still include the package even if metadata extraction fails
+        packagesWithMetadata.push({
+          name,
+          version,
+          description: '',
+          main: 'index.js',
+          types: null,
+          hasTypes: false,
+          keywords: [],
+          author: '',
+          license: ''
+        });
+      }
+    }
+    
+    return { success: true, packages: packagesWithMetadata };
+  } catch (error: any) {
+    return { 
+      success: false, 
+      error: error.message || 'Failed to get packages metadata'
     };
   }
 });

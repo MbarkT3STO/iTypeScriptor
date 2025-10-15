@@ -26,7 +26,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('npm-uninstall', packageName),
   
   npmList: () => 
-    ipcRenderer.invoke('npm-list')
+    ipcRenderer.invoke('npm-list'),
+  
+  // Package metadata and IntelliSense
+  getPackageMetadata: (packageName: string) => 
+    ipcRenderer.invoke('get-package-metadata', packageName),
+  
+  getPackageExports: (packageName: string) => 
+    ipcRenderer.invoke('get-package-exports', packageName),
+  
+  getAllPackagesMetadata: () => 
+    ipcRenderer.invoke('get-all-packages-metadata')
 });
 
 // Type definitions for TypeScript
@@ -66,6 +76,25 @@ declare global {
         stderr?: string;
       }>;
       npmList: () => Promise<{
+        success: boolean;
+        packages?: any[];
+        error?: string;
+      }>;
+      getPackageMetadata: (packageName: string) => Promise<{
+        success: boolean;
+        metadata?: any;
+        error?: string;
+      }>;
+      getPackageExports: (packageName: string) => Promise<{
+        success: boolean;
+        exports?: {
+          packageExports: any;
+          mainExports: string[];
+          hasTypes: boolean;
+        };
+        error?: string;
+      }>;
+      getAllPackagesMetadata: () => Promise<{
         success: boolean;
         packages?: any[];
         error?: string;

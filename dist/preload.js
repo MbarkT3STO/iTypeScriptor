@@ -12,5 +12,9 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
     npmSearch: (query) => electron_1.ipcRenderer.invoke('npm-search', query),
     npmInstall: (packageName) => electron_1.ipcRenderer.invoke('npm-install', packageName),
     npmUninstall: (packageName) => electron_1.ipcRenderer.invoke('npm-uninstall', packageName),
-    npmList: () => electron_1.ipcRenderer.invoke('npm-list')
+    npmList: () => electron_1.ipcRenderer.invoke('npm-list'),
+    // Package metadata and IntelliSense
+    getPackageMetadata: (packageName) => electron_1.ipcRenderer.invoke('get-package-metadata', packageName),
+    getPackageExports: (packageName) => electron_1.ipcRenderer.invoke('get-package-exports', packageName),
+    getAllPackagesMetadata: () => electron_1.ipcRenderer.invoke('get-all-packages-metadata')
 });
